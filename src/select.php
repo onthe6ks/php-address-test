@@ -2,6 +2,8 @@
 
 require_once 'pdo_connect.php';
 require_once 'address_utils.php';
+require_once 'orm.php';
+
 
 $sql = 'SELECT * FROM address limit 2';
 
@@ -10,26 +12,50 @@ $prepare = $dbh->prepare($sql);
 // プリペアドステートメントを実行する
 $prepare->execute();
 
-// PDO::FETCH_ASSOCは、対応するカラム名にふられているものと同じキーを付けた 連想配列として取得します。
-//$result = $prepare->fetchAll(PDO::FETCH_ASSOC);
 
 // 結果を出力
 //var_dump($result);
 
 foreach ($prepare as $row) {
- 
-// データベースのフィールド名で出力
-//echo $row['no'].'：'.$row['subnet_mask']."\n";
+    
+    $extra = new OrmExtra($row['no']);
+    
 
-#.で分割してサブネットを分ける
+    #サブネットの形式が正しいか確認    
+    try{
+        $array_int_subnet = convert_int_subnet($row['subnet_mask']);
 
-#$array_int_subnet = convert_int_subnet($row['subnet_mask']);
+    }catch (Exception $e) {
+        #変換の失敗と原因の表示
+        echo "no.",$row['no'],' 捕捉した例外: ',  $e->getMessage(), "\n";
+        $extra->error = true;
+    }
 
-$array_int_subnet = convert_int_subnet("");
 
-echo "===================\n";
-var_dump($array_int_subnet);
-echo "===================\n";
+    #ネットワークアドレスに変換できるか
+    try{
+#        $extra->to_network_address = cal_network_address($row['ip1'],$row['ip2'],$row['ip3'],$row['ip4'],$array_int_subnet);
+        $extra->to_network_address = cal_network_address("-2",$row['ip2'],$row['ip3'],$row['ip4'],$array_int_subnet);
+
+        $extra->flag_to_network_address = true;
+    }catch (Exception $e){
+        #変換の失敗と原因の表示
+        echo "no.",$row['no'],' 捕捉した例外: ',  $e->getMessage(), "\n";
+        $extra->error = true;
+        
+        #失敗した場合はネットワークアドレスはないこととDBに入っていた情報をそのまま格納
+        $extra->flag_to_network_address = false;
+        $extra->to_network_address = $row['ip1'].".".$row['ip2'].".".$row['ip3'].".".$row['ip4'];
+        
+    }
+
+    
+    
+    echo "===================\n";
+    var_dump($row);
+    var_dump($extra);
+
+    echo "===================\n";
 }
 
 

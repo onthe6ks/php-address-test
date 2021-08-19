@@ -5,6 +5,8 @@ require_once 'address_utils.php';
 require_once 'orm.php';
 
 
+$dbh = get_dbh();
+
 $sql = 'SELECT * FROM address limit 10';
 
 $prepare = $dbh->prepare($sql);
@@ -48,26 +50,8 @@ foreach ($prepare as $row) {
         
     }
     
-    #データの追加
-    try{
-        $insert_sql = 'insert into extra (no,To_Network_Address,Flag_To_Network_Address,From_Network_Address,Flag_From_Network_Address,error) values (:no,:tna,:ftna,:fna,:ffna,:e)';
-        
-        $insert_prepare = $dbh->prepare($insert_sql);
-        
-        $insert_prepare->bindValue(':no', $extra->no, PDO::PARAM_INT);
-        $insert_prepare->bindValue(':tna', $extra->to_network_address, PDO::PARAM_STR);
-        $insert_prepare->bindValue(':ftna', $extra->flag_to_network_address, PDO::PARAM_BOOL);
-        $insert_prepare->bindValue(':fna', $extra->from_network_address, PDO::PARAM_STR);
-        $insert_prepare->bindValue(':ffna', $extra->flag_from_network_address, PDO::PARAM_BOOL);
-        $insert_prepare->bindValue(':e', $extra->error, PDO::PARAM_BOOL);
-        
-        $insert_prepare->execute();
-        
-    }catch (Exception $e){
-        #データ追加失敗
-        echo "DB:EEROR　no.",$row['no'],' 捕捉した例外: ',  $e->getMessage(), "\n";
-    }
-    
+    $extra->insert($dbh);
+
 /*    echo "===================\n";
     var_dump($row);
     var_dump($extra);

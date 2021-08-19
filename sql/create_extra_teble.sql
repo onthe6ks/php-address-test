@@ -1,3 +1,6 @@
+
+drop table if exists extra;
+
 CREATE TABLE `extra` (
   `no` int(11) NOT NULL,
   `To_Network_Address` text DEFAULT NULL,
